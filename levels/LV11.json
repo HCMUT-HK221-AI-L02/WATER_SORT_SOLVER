@@ -1,0 +1,11 @@
+[
+    ["YELLOW", "PINK", "GREY", "YELLOW"],
+    ["GREEN", "RED", "BLUE", "YELLOW"],
+    ["PINK", "GREY", "ORANGE", "RED"],
+    ["ORANGE", "GREEN", "GREEN", "YELLOW"],
+    ["BLUE", "PINK", "GREEN", "RED"],
+    ["GREY", "RED", "BLUE", "ORANGE"],
+    ["PINK", "ORANGE", "BLUE", "GREY"],
+    [],
+    []
+]
