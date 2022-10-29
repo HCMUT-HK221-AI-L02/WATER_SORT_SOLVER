@@ -1,28 +1,28 @@
 """Entry point for the solver"""
 from typing import Optional
 import click
+
 from lib import file2collection
-from lib.collection import ContainerCollection
-from lib.search import Option, bfs, dfs
+from lib.collection import BottleCollection
+from lib.search import A_star, State, dfs
 
 def main():
     puzzle: str = input("Path to puzzle, please provide a .json file only, for example 'puzzle/stat.json' : ")
-    algorithm: str = input ("Algorithm, please type DFS or A*: ")
     try:
-        start: ContainerCollection = file2collection.load(puzzle)
+        start: BottleCollection = file2collection.load(puzzle)
     except ValueError as err:
         raise click.BadArgumentUsage("Invalid PUZZLE: " + str(err))
     print("Here is the input: \n")
     print(start, "\n")
 
-    result: Optional[Option] = None
-    if algorithm == "BFS":
-        print("Searching using Breadth-First Search\n")
-        result = bfs(start)
+    algorithm: str = input ("Algorithm, please type DFS or A*: ")
+    result: Optional[State] = None
+    if algorithm == "A*":
+        print("Searching using A* Search\n")
+        result = A_star(start)
     elif algorithm == "DFS":
         print("Searching using Depth-First Search\n")
         result = dfs(start)
-
     if result is None:
         print("Cannot be solved :(")
     else:

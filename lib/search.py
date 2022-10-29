@@ -1,90 +1,86 @@
 """Implementation of search algorithms."""
-import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 from dataclasses import dataclass
-
-from lib.collection import ContainerCollection
+# importing "heapq" to implement heap queue
+import heapq
+from lib.collection import BottleCollection
 from lib.move import Move
 
-
 @dataclass
-class Option:
-    """Represents an option in the graph of possible games."""
-
-    collection: ContainerCollection
+class State:
+    """Represents an state in the graph of possible games."""
+    collection: BottleCollection
     moves: Tuple[Move, ...]
+    score: Optional[int] = None
+    def __lt__(self, other: Any) ->bool:
+        if self.score != other.score:
+            return self.score < other.score
+        #Tie breaker: sort solutions with many steps in front of solutions with fewer steps.
+        #This leads to the algorithm "greedily" trying longer solutions first,
+        #before back-tracking to shorter solutions.
+        return len(self.moves) > len(other.moves)
 
-
-def bfs(root: ContainerCollection) -> Optional[Option]:
-    """Perform a Breadth-first search to find an optimal solution."""
-    # Ensure the search is required
-    if root.is_solved:
-        return Option(root, tuple())
-    queue: List[Option] = [
-        Option(root.after(move), (move,)) for move in root.get_moves()
-    ]
-    while len(queue) > 0:
-        logging.debug(f"loop {len(queue[0].moves)} Options {len(queue)}")
-        next_queue: List[Option] = []
-        discovered: List[ContainerCollection] = []
-        for option in queue:
-            for move in option.collection.get_moves():
-                # If this move is the reverse of the previous move and the move
-                # before that was this move, a loop has been found and needs to
-                # be broken by simply ignoring this move.
-                if (
-                    len(option.moves) > 1
-                    and option.moves[-1] == move.reverse()
-                    and option.moves[-2] == move
-                ):
-                    continue
-                _next: ContainerCollection = option.collection.after(move)
-                is_solved = _next.is_solved
-                # If this is a leaf node, we cannot continue our search
-                if not is_solved and len(_next.get_moves()) == 0:
-                    continue
-                # Check if this option has been marked as visited
-                if _next in discovered:
-                    continue
-                moves = list(option.moves)
-                moves.append(move)
-                # Check if a solution was found
-                if is_solved:
-                    return Option(_next, tuple(moves))
-                discovered.append(_next)
-                next_queue.append(Option(_next, tuple(moves)))
-        queue = next_queue
-
-    # No valid options
-    return None
-
-
-def dfs(root: ContainerCollection) -> Optional[Option]:
+def dfs(root: BottleCollection) -> Optional[State]:
     """Perform a depth-first search to find a solution."""
     # Ensure the search is required
     if root.is_solved:
-        return Option(root, tuple())
-
-    visited: List[ContainerCollection] = []
+        return State(root, tuple())
+    visited: List[BottleCollection] = []
     # Call the recursive function
-    return _dfs(visited, Option(root, tuple()))
+    return dfs_recursive(visited, State(root, tuple()))
 
-
-def _dfs(visited: List[ContainerCollection], option: Option) -> Optional[Option]:
-    col = option.collection
+def dfs_recursive(visited: List[BottleCollection], state: State) -> Optional[State]:
+    col = state.collection
+    #Check if we visited this case or not
     if col in visited:
         return None
     visited.append(col)
+    #If this case is solved, just return the result
     if col.is_solved:
-        return option
-
+        return state
+    #Searching for solution
     for move in col.get_moves():
-        next_moves = list(option.moves)
+        next_moves = list(state.moves)
         next_moves.append(move)
-        next_option = Option(col.after(move), tuple(next_moves))
-        result = _dfs(visited, next_option)
+        next_option = State(col.after_moving(move), tuple(next_moves))
+        result = dfs_recursive(visited, next_option)
         if result is not None:
             return result
-
     # After visiting all possible moves, nothing had a solution
+    return None
+
+def A_star(root: BottleCollection) -> Optional[State]:
+    state: State = State(root, tuple())
+    # h holds partial solutions.
+	# Pop() returns (one of) the solution closest to a solved state.
+    h: List[State] = [state]
+    heapq.heapify(h)
+
+    while len(h):
+        base: State = heapq.heappop(h)
+        if base.collection.is_solved:
+            return base
+
+        for move in base.collection.get_moves():
+            # If this move is the reverse of the previous move and the move
+            # before that was this move, a loop has been found and needs to
+            # be broken by simply ignoring this move.
+            if (
+                len(base.moves) > 1
+                and base.moves[-1] == move.reverse()
+                and base.moves[-2] == move
+            ):
+                continue
+            
+            next_moves = list(base.moves)
+            next_moves.append(move)
+            next_state: State = State(base.collection.after_moving(move), tuple(next_moves))
+
+            minRequiredMoves = next_state.collection.minRequiredMoves()
+            next_state.score = minRequiredMoves + len(next_state.moves)
+            next_state.moves[-1].score = next_state.score
+
+            heapq.heappush(h, next_state)
+            #This use to print the current heap when debug
+            #print(h, "\n")
     return None

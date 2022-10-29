@@ -2,10 +2,9 @@
 import pathlib
 
 from lib import json2collection
-from lib.collection import ContainerCollection
+from lib.collection import BottleCollection
 
-
-def load(path: str) -> ContainerCollection:
+def load(path: str) -> BottleCollection:
     """Load a file based on it's extension."""
     file = pathlib.Path(path)
     if file.suffix == ".json":

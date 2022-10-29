@@ -2,11 +2,9 @@
 import json
 from typing import TextIO, List
 
-# from solver.lib.container import Container
-from lib.collection import ContainerCollection
+from lib.collection import BottleCollection
 
-
-def load(file: TextIO) -> ContainerCollection:
-    """Load a json file into a `ContainerCollection`."""
+def load(file: TextIO) -> BottleCollection:
+    """Load a json file into a `BottleCollection`."""
     content: List[List[str]] = json.load(file)
-    return ContainerCollection(content)
+    return BottleCollection(content)
