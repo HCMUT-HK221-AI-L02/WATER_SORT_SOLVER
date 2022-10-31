@@ -7,7 +7,7 @@ from lib.collection import BottleCollection
 from lib.search import A_star, State, dfs
 import time
 import psutil
-def main():
+def main()
     puzzle: str = input("Path to puzzle, please provide a .json file only, for example 'puzzle/stat.json' : ")
     try:
         start: BottleCollection = file2collection.load(puzzle)

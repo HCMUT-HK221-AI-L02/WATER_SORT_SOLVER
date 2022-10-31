@@ -12,6 +12,7 @@ class State:
     collection: BottleCollection
     moves: Tuple[Move, ...]
     score: Optional[int] = None
+
     def __lt__(self, other: Any) ->bool:
         if self.score != other.score:
             return self.score < other.score
@@ -19,6 +20,14 @@ class State:
         #This leads to the algorithm "greedily" trying longer solutions first,
         #before back-tracking to shorter solutions.
         return len(self.moves) > len(other.moves)
+
+    def __eq__(self, other: Any) -> bool:
+        if self.collection == other.collection:
+            return True
+        return False
+
+    def __ne__(self, other: Any) -> bool:
+        return not self.__eq__(other)
 
 def dfs(root: BottleCollection) -> Optional[State]:
     """Perform a depth-first search to find a solution."""
@@ -53,13 +62,16 @@ def A_star(root: BottleCollection) -> Optional[State]:
     state: State = State(root, tuple())
     # h holds partial solutions.
 	# Pop() returns (one of) the solution closest to a solved state.
-    h: List[State] = [state]
-    heapq.heapify(h)
+    open_set: List[State] = [state]
+    closed_set: List[State] = []
+    heapq.heapify(open_set)
 
-    while len(h):
-        base: State = heapq.heappop(h)
+    while len(open_set):
+        base: State = heapq.heappop(open_set)
         if base.collection.is_solved:
             return base
+        if base.collection.minRequiredMoves == 0:
+            continue
 
         for move in base.collection.get_moves():
             # If this move is the reverse of the previous move and the move
@@ -71,16 +83,37 @@ def A_star(root: BottleCollection) -> Optional[State]:
                 and base.moves[-2] == move
             ):
                 continue
-            
+            #Create a new State
             next_moves = list(base.moves)
             next_moves.append(move)
             next_state: State = State(base.collection.after_moving(move), tuple(next_moves))
-
+            #Calculate the f score
             minRequiredMoves = next_state.collection.minRequiredMoves()
             next_state.score = minRequiredMoves + len(next_state.moves)
             next_state.moves[-1].score = next_state.score
-
-            heapq.heappush(h, next_state)
+            #Check if this state has been visited or not
+            if next_state not in open_set and next_state not in closed_set:
+                #Add a new state to open set
+                heapq.heappush(open_set, next_state)
+            else:
+                #Check if g value of this state when visit it through the base state
+                #is better than the current g value
+                #If yes, we have to visit it again through the base state
+                if next_state in open_set:
+                    visited: State = open_set[open_set.index(next_state)]
+                    if len(visited.moves) > len(next_state.moves):
+                        visited.moves = next_state.moves
+                        visited.score = visited.collection.minRequiredMoves() + len(visited.moves)
+                if next_state in closed_set:
+                    visited: State = closed_set[closed_set.index(next_state)]
+                    if len(visited.moves) > len(next_state.moves):
+                        visited.moves = next_state.moves
+                        visited.score = visited.collection.minRequiredMoves() + len(visited.moves)
+                        #Add this visited state to open set and remove it from closed set 
+                        heapq.heappush(open_set, visited)
+                        closed_set.remove(visited)
+        #Add the visited state to closed set
+        closed_set.append(base)
             #This use to print the current heap when debug
-            #print(h, "\n")
+            #print(open_set, "\n")
     return None
