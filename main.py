@@ -11,7 +11,7 @@ import psutil
 
 def main():
 
-    puzzle: str = input("Path to puzzle, please provide a .json file only, for example 'puzzle/stat.json' : ")
+    puzzle: str = input("Path to puzzle, please provide a .json file only, for example 'levels/LV1.json' : ")
     try:
         start: BottleCollection = file2collection.load(puzzle)
     except ValueError as err:
